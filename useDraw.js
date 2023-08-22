@@ -120,6 +120,15 @@ const useDraw = () => {
       canvas.removeEventListener('dblclick', onClear);
    };
 
+   /**
+    * Container：dom
+    * opts：选项
+    * {
+    *    canvasStyle: Object   画布属性
+    *    onComplete： (points: Array<{ x: number, y: number }>) => void     完成绘制时的回调
+    *    initPoints: Array<{x: number,y: number}> 初始点位
+    * }
+    */
    const init = (Container, opts = {}) => {
       // 初始化容器
       Container = Container;
@@ -158,6 +167,12 @@ const useDraw = () => {
       ctx.strokeStyle = strokeStyle;
       ctx.fillStyle = fillStyle;
 
+      // 判断有没有初始值，有的话取消绘制状态
+      if (opts.initPoints && opts.initPoints.length >=3) {
+         points = opts.initPoints;
+         drawArea();
+         isPaint = false;
+      }
       // 注册监听事件
       listen();
    };
