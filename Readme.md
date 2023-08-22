@@ -1,8 +1,15 @@
 # 效果
-![image](https://github.com/sanhuamao1/useDraw_polygon/assets/54561827/e877b363-d323-4d06-b723-6e220559472c)
 
+![gbig9-7l3lv](https://github.com/sanhuamao1/useDraw_polygon/assets/54561827/ba0a67dc-97ab-409b-a3da-2233d02b58ed)
 
-# 介绍
+# 操作
+1. 鼠标左键：加入路径点
+2. 鼠标右键：撤销
+3. 鼠标移动：动态绘制区域
+4. 双击鼠标左键：清除画布
+5. 回车：完成绘图
+
+# 文件介绍
 - index.html：打开可直接查看效果
 - useDraw.js：封装的钩子
 
