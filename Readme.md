@@ -20,10 +20,12 @@ import useDraw from './useDraw';
 let draw=useDraw()
 draw.init(domRef, {
    // 传入一些选项。
-   // 绘制完成时的回调
+   // 绘制完成时的回调（可选）
    onComplete: (points) => {
       console.log('points', points);
-   }
+   },
+   // 初始区域（可选）
+   initPoints: [{x:200,y:200},{x:300,y:300},{x:200,y:300}],
 });
 
 // 用完后记得销毁
