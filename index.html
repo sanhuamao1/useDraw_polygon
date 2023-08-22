@@ -1,0 +1,128 @@
+<canvas
+   id="myCanvas"
+   style="background-color: yellow"
+   width="400"
+   height="400"
+   tabindex="0"
+></canvas>
+<style>
+   * {
+      margin: 0;
+   }
+   canvas:focus {
+      outline: none;
+   }
+</style>
+<script>
+   const el = document.getElementById('myCanvas');
+   //    el.focus();
+   const w = el.width;
+   const h = el.height;
+   let isPaint = true;
+
+   const ctx = el.getContext('2d');
+   let points = [];
+
+   // 初始化样式
+   ctx.lineWidth = 4;
+   ctx.strokeStyle = '#0073e6';
+   // 填充，需要注意前后顺序
+   ctx.fillStyle = 'rgba(0, 115, 230,0.2)';
+
+   const drawLine = (mouse) => {
+      ctx.clearRect(0, 0, w, h);
+      const firstPoint = points[0];
+      ctx.beginPath();
+      ctx.moveTo(firstPoint.x, firstPoint.y);
+      ctx.lineTo(mouse.x, mouse.y);
+      ctx.stroke();
+   };
+
+   // 动态区域
+   const drawArea = (mouse) => {
+      ctx.clearRect(0, 0, w, h);
+      ctx.beginPath();
+      // 画已经加上的点
+      for (let i = 0; i < points.length; i++) {
+         if (i === 0) {
+            ctx.moveTo(points[i].x, points[i].y);
+         } else {
+            ctx.lineTo(points[i].x, points[i].y);
+         }
+      }
+      // 如果传入了鼠标点，将它作为最后一点，否则只考虑point数组中的点
+      if (mouse) {
+         ctx.lineTo(mouse.x, mouse.y);
+      }
+
+      // 再画回第一个点，封闭区域
+      ctx.lineTo(points[0].x, points[0].y);
+
+      // 划线与填充
+      ctx.stroke();
+      ctx.fill();
+   };
+
+   const draw = (mouse) => {
+      const pointLength = points.length;
+      if (isPaint === false) return;
+      switch (pointLength) {
+         case 0:
+            return;
+         case 1:
+            drawLine(mouse); // 画直线
+            break;
+         default:
+            drawArea(mouse); // 画区域
+            break;
+      }
+   };
+
+   const onMouseMove = (e) => {
+      draw({ x: e.offsetX, y: e.offsetY });
+   };
+
+   const onClick = (e) => {
+      // 最多画10个点
+      if (points.length >= 10) return;
+      points.push({ x: e.offsetX, y: e.offsetY });
+   };
+
+   const onRightClick = (e) => {
+      e.stopPropagation();
+      e.preventDefault(); // 防止默认打开菜单
+
+      const pointLength = points.length;
+      if (pointLength === 0) return;
+      points.pop();
+      draw({ x: e.offsetX, y: e.offsetY });
+      return false;
+   };
+
+   const onEnter = (e) => {
+      let keyCode = e.keyCode || e.which || e.charCode;
+      if (keyCode == 13) {
+         const pointLength = points.length;
+         // 至少需要三个点才允许画区域
+         if (pointLength >= 3) {
+            isPaint = false;
+            drawArea(); // 画封闭区域
+         }
+      }
+   };
+
+   const onClear = () => {
+      console.log(111);
+      if (isPaint === false) {
+         isPaint = true;
+      }
+      points = [];
+      ctx.clearRect(0, 0, w, h);
+   };
+
+   el.addEventListener('mousemove', onMouseMove);
+   el.addEventListener('click', onClick);
+   el.addEventListener('keydown', onEnter);
+   el.addEventListener('contextmenu', onRightClick);
+   el.addEventListener('dblclick', onClear);
+</script>
