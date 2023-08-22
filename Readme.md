@@ -1,4 +1,12 @@
-使用
+# 效果
+![image](https://github.com/sanhuamao1/useDraw_polygon/assets/54561827/e877b363-d323-4d06-b723-6e220559472c)
+
+
+# 介绍
+- index.html：打开可直接查看效果
+- useDraw.js：封装的钩子
+
+# useDraw使用
 ```js
 import useDraw from './useDraw';
 
