@@ -5,13 +5,23 @@ const useDraw = () => {
    let w, h; // 画布宽度
    let isPaint = true; // 是否处于绘图模式
    let points = []; // 已加入的点
-   let InitStyle = {
+
+   // 默认样式
+   let defaultStyle = {
       lineWidth: 4, // 画笔大小
       strokeStyle: '#0073e6', // 画笔颜色
       fillStyle: 'rgba(0, 115, 230,0.2)', // 填充颜色
-      backgroudColor: 'transparent', // 画布颜色
+      backgroudColor: 'transparent' // 画布颜色
    };
-   let onComplete; // 绘图完成后的回调
+
+   // 默认选项
+   let options = {
+      onComplete: undefined, // 绘图完成后的回调
+      beforeComplete: (points)=>points.length>=3, // 完成绘图前的验证 
+      onClear: undefined, // 清空绘图后的回调
+      max: 4, // 限制最多点位数量
+      canvasStyle: { ...defaultStyle }
+   }; // 选项
 
    // 画横线
    const drawLine = (mouse) => {
@@ -27,6 +37,7 @@ const useDraw = () => {
    const drawArea = (mouse) => {
       ctx.clearRect(0, 0, w, h);
       ctx.beginPath();
+      // 画已经加上的点
       for (let i = 0; i < points.length; i++) {
          if (i === 0) {
             ctx.moveTo(points[i].x, points[i].y);
@@ -34,11 +45,15 @@ const useDraw = () => {
             ctx.lineTo(points[i].x, points[i].y);
          }
       }
-
+      // 如果传入了鼠标点，将它作为最后一点，动态绘制区域。否则根据points直接封闭区域
       if (mouse) {
          ctx.lineTo(mouse.x, mouse.y);
       }
+
+      // 回到第一个点，封闭区域
       ctx.lineTo(points[0].x, points[0].y);
+
+      // 划线与填充
       ctx.stroke();
       ctx.fill();
    };
@@ -59,20 +74,23 @@ const useDraw = () => {
       }
    };
 
+   // 移动鼠标的事件：动态绘制图形
    const onMouseMove = (e) => {
       draw({ x: e.offsetX, y: e.offsetY });
    };
 
+   // 点击事件：添加点
    const onClick = (e) => {
-      // 最多画10个点
-      if (points.length >= 10) return;
+      if (getOpts().max && points.length > getOpts().max) {
+         return;
+      }
       points.push({ x: e.offsetX, y: e.offsetY });
    };
 
+   // 鼠标右键：撤销
    const onRightClick = (e) => {
       e.stopPropagation();
       e.preventDefault();
-
       const pointLength = points.length;
       if (pointLength === 0) return;
       points.pop();
@@ -80,14 +98,14 @@ const useDraw = () => {
       return false;
    };
 
+   // 回车事件：完成绘图
    const onEnter = (e) => {
       let keyCode = e.keyCode || e.which || e.charCode;
       if (keyCode == 13) {
-         const pointLength = points.length;
-         if (pointLength >= 3) {
+         if(options.beforeComplete(points)){
             isPaint = false;
-            drawArea();
-            onComplete && onComplete(getPoints());
+            drawArea(); // 画封闭区域
+            options.onComplete && options.onComplete(getPoints());
          }
       }
    };
@@ -99,6 +117,7 @@ const useDraw = () => {
       }
       points = [];
       ctx.clearRect(0, 0, w, h);
+      options.onClear && options.onClear()
    };
 
    const listen = () => {
@@ -110,45 +129,49 @@ const useDraw = () => {
    };
 
    const destroy = () => {
-      Container = null;
-      canvas = null;
-      ctx = null;
       canvas.removeEventListener('mousemove', onMouseMove);
       canvas.removeEventListener('click', onClick);
       canvas.removeEventListener('keydown', onEnter);
       canvas.removeEventListener('contextmenu', onRightClick);
       canvas.removeEventListener('dblclick', onClear);
+      canvas = null;
+      Container = null;
+      ctx = null;
+      options = null;
    };
 
-   /**
-    * Container：dom
-    * opts：选项
-    * {
-    *    canvasStyle: Object   画布属性
-    *    onComplete： (points: Array<{ x: number, y: number }>) => void     完成绘制时的回调
-    *    initPoints: Array<{x: number,y: number}> 初始点位
-    * }
-    */
-   const init = (Container, opts = {}) => {
+   // 根据点画区域
+   const drawAreaByPoints = (newPoints) => {
+      if (newPoints.length < 3) {
+         return;
+      }
+      points = newPoints;
+      drawArea();
+      isPaint = false;
+   };
+
+   const init = (dom, newOpts = {}) => {
       // 初始化容器
-      Container = Container;
+      Container = dom;
+      options = {
+         ...options,
+         ...newOpts,
+         canvasStyle: {
+            ...defaultStyle,
+            ...(newOpts.canvasStyle ? { ...newOpts.canvasStyle } : {})
+         }
+      };
+
       w = Container.getBoundingClientRect().width;
       h = Container.getBoundingClientRect().height;
 
       if (Container.style.position === undefined) {
          Container.style.position = 'relaive';
       }
-      if (opts.onComplete) {
-         onComplete = opts.onComplete;
-      }
 
-      InitStyle = {
-         ...InitStyle,
-         ...(opts.canvasStyle ? opts.canvasStyle : {}),
-      };
       // 创建canvas标签
       canvas = document.createElement('canvas');
-      const { backgroudColor } = InitStyle;
+      const { backgroudColor } = options.canvasStyle;
       canvas.style.backgroundColor = backgroudColor;
       canvas.tabIndex = '0'; // 否则用不了回车
       canvas.width = w;
@@ -162,27 +185,27 @@ const useDraw = () => {
 
       // 初始化画布
       ctx = canvas.getContext('2d');
-      const { lineWidth, strokeStyle, fillStyle } = InitStyle;
+      const { lineWidth, strokeStyle, fillStyle } = options.canvasStyle;
       ctx.lineWidth = lineWidth;
       ctx.strokeStyle = strokeStyle;
       ctx.fillStyle = fillStyle;
 
-      // 判断有没有初始值，有的话取消绘制状态
-      if (opts.initPoints && opts.initPoints.length >=3) {
-         points = opts.initPoints;
-         drawArea();
-         isPaint = false;
+      // 判断有没有初始值，有的话关闭绘制状态
+      if (options.initPoints && options.initPoints.length !== 0) {
+         drawAreaByPoints(options.initPoints);
       }
       // 注册监听事件
       listen();
    };
 
    const getPoints = () => points;
+   const getOpts = () => options;
 
    return {
       init,
       destroy,
       getPoints,
+      drawAreaByPoints
    };
 };
 
