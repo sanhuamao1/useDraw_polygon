@@ -25,9 +25,18 @@ draw.init(domRef, {
       console.log('points', points);
    },
    // 初始区域（可选）
-   initPoints: [{x:200,y:200},{x:300,y:300},{x:200,y:300}],
+   initPoints: [{x:200,y:200},{x:300,y:300},{x:200,y:300}]
+   onClear:()=>{ /** 清空画布时的回调 */},
+   max:4, // 允许添加的最大点位数
+   beforeComplete:(points)=>points.length===4 // 触发完成回调前的判断
+   canvasStyle:{
+      /** 修改画布样式 */
+   }
 });
 
-// 用完后记得销毁
+// 传点绘制区域
+draw.drawAreaByPoints([{x:200,y:200},{x:300,y:300},{x:200,y:300}])
+
+// 用完后销毁
 draw.destroy()
 ```
