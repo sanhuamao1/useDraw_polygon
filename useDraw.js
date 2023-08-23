@@ -89,8 +89,10 @@ const useDraw = () => {
 
    // 鼠标右键：撤销
    const onRightClick = (e) => {
+      // 防止默认打开菜单s
       e.stopPropagation();
       e.preventDefault();
+
       const pointLength = points.length;
       if (pointLength === 0) return;
       points.pop();
@@ -102,6 +104,8 @@ const useDraw = () => {
    const onEnter = (e) => {
       let keyCode = e.keyCode || e.which || e.charCode;
       if (keyCode == 13) {
+         // const pointLength = points.length;
+         // 至少需要三个点才允许画区域
          if(options.beforeComplete(points)){
             isPaint = false;
             drawArea(); // 画封闭区域
@@ -129,11 +133,13 @@ const useDraw = () => {
    };
 
    const destroy = () => {
-      canvas.removeEventListener('mousemove', onMouseMove);
-      canvas.removeEventListener('click', onClick);
-      canvas.removeEventListener('keydown', onEnter);
-      canvas.removeEventListener('contextmenu', onRightClick);
-      canvas.removeEventListener('dblclick', onClear);
+      if(canvas){
+         canvas.removeEventListener('mousemove', onMouseMove);
+         canvas.removeEventListener('click', onClick);
+         canvas.removeEventListener('keydown', onEnter);
+         canvas.removeEventListener('contextmenu', onRightClick);
+         canvas.removeEventListener('dblclick', onClear);
+      }
       canvas = null;
       Container = null;
       ctx = null;
